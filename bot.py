@@ -12,11 +12,11 @@ print ('Started...')
 
 def handle(msg):
 	content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
-#	print(content_type, chat_type, chat_id, msg_id)
+	print(content_type, chat_type, chat_id, msg_id)
 	if content_type != 'text':
 		return
 	command = msg['text'].lower()
-	if command.split(' ')[0] == '/archive':
+	if (command.split(' ')[0] == '/archive' or command.split(' ')[0] == '/archive@archiveisbot'):
 		timegate = 'https://archive.fo/timegate/'
 		mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
 		uri_rec = re.search("(?P<url>https?://[^\s]+)", command)
