@@ -19,6 +19,13 @@ def handle(msg):
 	if (command.split(' ')[0] == '/archive' or command.split(' ')[0] == '/archive@archiveisbot'):
 		timegate = 'https://archive.fo/timegate/'
 		mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
+		try:
+			is_reply = msg['reply_to_message']
+		except KeyError:
+			pass
+		else:
+			command = is_reply['text']
+
 		uri_rec = re.search("(?P<url>https?://[^\s]+)", command)
 		if uri_rec:
 			uri = uri_rec.group("url")
