@@ -11,10 +11,8 @@ with open('token.txt', 'r') as f:
 	token = f.read().strip('\n')
 bot = telepot.Bot(token)
 print ('Started...')
-timegate = 'https://archive.fo/timegate/'
-mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
 def handle(msg):
-	print(telepot.flavor(msg))
+#	print(telepot.flavor(msg))
 	flava = telepot.flavor(msg)
 	if (flava == 'chat'):
 		content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
@@ -29,16 +27,14 @@ def handle(msg):
 				pass
 			else:
 				command = is_reply['text']
-#			return command
+		else:
+			return
 	elif (flava == 'inline_query'):
 		query_id, form_id, query_string = telepot.glance(msg, flavor='inline_query')
 		query_type = 'inline'
-#		print ('Inline Query:', query_id, form_id, query_string)
-#		return query_string
 	else:
 		return
-
-	if command:
+	if command is not None:
 		uri_rec = re.search("(?P<url>https?://[^\s]+)", command)
 	elif query_string:
 		uri_rec = re.search("(?P<url>https?://[^\s]+)", query_string)
@@ -46,7 +42,7 @@ def handle(msg):
 		return
 	if uri_rec:
 		uri = uri_rec.group("url")
-		print(uri)
+#		print(uri)
 		timegate = 'https://archive.fo/timegate/'
 		mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
 		try:
@@ -66,10 +62,11 @@ def handle(msg):
 			url_b = page_out.split(b'"')[1]
 			archive_uri = url_b.decode('utf8')
 		else:
-			return
-#		return archive_uri
+			pass
+	else:
+		return
 	if query_type == 'chat':
-		bot.sendMessage(chat_id, archive_uri, reply_to_message=msg_id)
+		bot.sendMessage(chat_id, archive_uri, reply_to_message_id=msg_id)
 	elif query_type == 'inline':
 		answerer = telepot.helper.Answerer(bot)
 		def compute():
