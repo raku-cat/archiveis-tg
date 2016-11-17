@@ -10,7 +10,6 @@ import urllib
 with open('token.txt', 'r') as f:
 	token = f.read().strip('\n')
 bot = telepot.Bot(token)
-answerer = telepot.helper.Answerer(bot)
 print ('Started...')
 timegate = 'https://archive.fo/timegate/'
 mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
@@ -23,37 +22,37 @@ def handle(msg):
 			return
 		command = msg['text'].lower()
 		if (command.split(' ')[0] == '/archive' or command.split(' ')[0] == '/archive@archiveisbot'):
+			query_type = 'chat'
 			try:
 				is_reply = msg['reply_to_message']
 			except KeyError:
 				pass
 			else:
 				command = is_reply['text']
+#			return command
 	elif (flava == 'inline_query'):
 		query_id, form_id, query_string = telepot.glance(msg, flavor='inline_query')
+		query_type = 'inline'
 #		print ('Inline Query:', query_id, form_id, query_string)
-		return query_string
+#		return query_string
 	else:
 		return
 
-def link_handler():
-#	content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
-	print (handle(msg))
-	if on_chat_command:
-		uri_rec = re.search("(?P<url>https?://[^\s]+)", on_chat_command())
-		query_type = 'chat'
+	if command:
+		uri_rec = re.search("(?P<url>https?://[^\s]+)", command)
 	elif query_string:
 		uri_rec = re.search("(?P<url>https?://[^\s]+)", query_string)
-		query_type = 'inline'
 	else:
 		return
 	if uri_rec:
 		uri = uri_rec.group("url")
 		print(uri)
+		timegate = 'https://archive.fo/timegate/'
+		mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
 		try:
 			archive_uri = mc.get_memento_info(uri).get("mementos").get("last").get("uri")[0]
-#				print(uri)
-#				print(archive_uri)
+#			print(uri)
+#			print(archive_uri)
 		except:
 			url = 'https://archive.fo/submit/'
 			user_agent = 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg'
@@ -70,30 +69,19 @@ def link_handler():
 			return
 #		return archive_uri
 	if query_type == 'chat':
-		return chat_response(msg), archive_uri
+		bot.sendMessage(chat_id, archive_uri, reply_to_message=msg_id)
 	elif query_type == 'inline':
-		return inline_response(msg), archive_uri
-
-def chat_response(msg):
-	content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
-	bot.sendMessage(chat_id, link_handler, reply_to_message=msg_id)
-
-def inline_response(msg):
-	def compute():
-		archive_json = [InlineQueryResultArticle(
-				id='url',
-				title=archive_uri,
-				input_message_content=InputTextMessageContent(
-					message_text=archive_uri
-				)
-			)]
-		return archive_json
-	answerer.answer(msg, compute)
-
-
-#	print(archive_uri)
-#		bot.answerInlineQuery(query_id, archive_uri)
-
+		answerer = telepot.helper.Answerer(bot)
+		def compute():
+			archive_json = [InlineQueryResultArticle(
+					id='url',
+					title=archive_uri,
+					input_message_content=InputTextMessageContent(
+						message_text=archive_uri
+					)
+				)]
+			return archive_json
+		answerer.answer(msg, compute)
 
 bot.message_loop(handle)
 while 1:
