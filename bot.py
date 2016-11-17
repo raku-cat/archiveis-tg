@@ -32,9 +32,10 @@ def handle(msg):
 	elif (flava == 'inline_query'):
 		query_id, form_id, query_string = telepot.glance(msg, flavor='inline_query')
 		query_type = 'inline'
+		command = None
 	else:
 		return
-	if command is not None:
+	if command:
 		uri_rec = re.search("(?P<url>https?://[^\s]+)", command)
 	elif query_string:
 		uri_rec = re.search("(?P<url>https?://[^\s]+)", query_string)
