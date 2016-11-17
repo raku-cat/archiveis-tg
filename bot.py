@@ -7,8 +7,9 @@ from memento_client import MementoClient
 import re
 import urllib
 
-TOKEN = open('token.txt', 'r').read()
-bot = telepot.Bot(TOKEN)
+with open('token.txt', 'r') as f:
+	token = f.read().strip('\n')
+bot = telepot.Bot(token)
 answerer = telepot.helper.Answerer(bot)
 print ('Started...')
 timegate = 'https://archive.fo/timegate/'
@@ -17,35 +18,27 @@ def handle(msg):
 	print(telepot.flavor(msg))
 	flava = telepot.flavor(msg)
 	if (flava == 'chat'):
-		return on_chat_command(msg)
+		content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
+		if content_type != 'text':
+			return
+		command = msg['text'].lower()
+		if (command.split(' ')[0] == '/archive' or command.split(' ')[0] == '/archive@archiveisbot'):
+			try:
+				is_reply = msg['reply_to_message']
+			except KeyError:
+				pass
+			else:
+				command = is_reply['text']
 	elif (flava == 'inline_query'):
-		return on_inline_query(msg)
-	else:
-		return
-def on_chat_command(msg):
-	content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
-	if content_type != 'text':
-		return
-	command = msg['text'].lower()
-#	print(msg)
-	if (command.split(' ')[0] == '/archive' or command.split(' ')[0] == '/archive@archiveisbot'):
-		try:
-			is_reply = msg['reply_to_message']
-		except KeyError:
-			pass
-		else:
-			command = is_reply['text']
-		return  link_handler(), command
-#		print(command)
-#		return link_handler()
-
-def on_inline_query(msg):
 		query_id, form_id, query_string = telepot.glance(msg, flavor='inline_query')
 #		print ('Inline Query:', query_id, form_id, query_string)
 		return query_string
-		return link_handler(msg)
+	else:
+		return
+
 def link_handler():
-	print(on_chat_command(msg))
+#	content_type, chat_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
+	print (handle(msg))
 	if on_chat_command:
 		uri_rec = re.search("(?P<url>https?://[^\s]+)", on_chat_command())
 		query_type = 'chat'
