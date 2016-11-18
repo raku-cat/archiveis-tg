@@ -63,7 +63,10 @@ def handle(msg):
 			url_b = page_out.split(b'"')[1]
 			archive_uri = url_b.decode('utf8')
 		else:
-			pass
+			if query_type == 'inline':
+				timegate ='https://archive.fo/timemap/'
+				mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
+				qual_uri = uri
 	else:
 		return
 	if query_type == 'chat':
@@ -71,13 +74,29 @@ def handle(msg):
 	elif query_type == 'inline':
 		answerer = telepot.helper.Answerer(bot)
 		def compute():
-			archive_json = [InlineQueryResultArticle(
-					id='url',
-					title=archive_uri,
-					input_message_content=InputTextMessageContent(
-						message_text=archive_uri
-					)
-				)]
+			timemap = mc.get_memento_info(qual_uri).get('timegate_uri')
+			hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',}
+			req = urllib.request.Request(timemap, headers=hdr)
+			archive_map = urllib.request.urlopen(req).read()
+			map_list = re.findall(b'\<(.*?)\>', archive_map)[2:-1]
+			map_decode = [x.decode('utf-8') for x in map_list]
+#			print(archive_uri)
+			archive_json = []
+			for x in map_decode:
+				archive_json.append(InlineQueryResultArticle(
+					id="url",
+					title=x,
+					input_message_content=InputTextMessageContent(message_text=x)
+					))
+#				),
+#				InlineQueryResultArticle(
+#					id='abc',
+#					title='bleh',
+#					input_message_content=InputTextMessageContent(
+#						messsage_text='beep'
+#					)
+#				print(x)
+			print(archive_json)
 			return archive_json
 		answerer.answer(msg, compute)
 
