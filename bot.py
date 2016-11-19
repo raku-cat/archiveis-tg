@@ -54,14 +54,14 @@ def on_inline_query(msg):
 			archive_map = r.text
 			map_list = re.findall('\<(.*?)\>', archive_map)[2:-1]
 			date_list= re.findall('datetime=\"(.+)\"', archive_map)
-			print(len(map_list))
-			print(len(date_list))
+#			print(len(map_list))
+#			print(len(date_list))
 			archive_json = []
 			if len(map_list) > 50:
 				map_list = re.findall('\<(.*?)\>', archive_map)[2:50]
-				date_list = re.findall('/datetime=\"(.+)\"/', archive_map)[0:50]
+#				print(len(map_list))
+#				print(len(date_list))
 			for x, y in zip(map_list, date_list):
-#				for y in date_list:
 					rnint = str(random.randint(1,3000))
 					archive_json.append(InlineQueryResultArticle(
 						id=rnint, title=y,
