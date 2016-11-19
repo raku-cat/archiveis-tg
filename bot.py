@@ -28,7 +28,7 @@ def on_chat_command(msg):
 			command = is_reply['text']
 	else:
 		return
-	print('Sending archive link')
+	print('Responding to ' + str(chat_id))
 	bot.sendMessage(chat_id, link_handler(command), reply_to_message_id=msg_id)
 
 def on_inline_query(msg):
@@ -93,10 +93,11 @@ def link_handler(link):
 		else:
 			return archive_uri
 	else:
-		return
+		return 'No valid URL found'
 	return archive_uri
 
 bot.message_loop({'chat': on_chat_command,
 		'inline_query': on_inline_query,
+		'edited_chat': on_chat_command,
 		},
 		run_forever='Started...')
