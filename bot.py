@@ -67,7 +67,6 @@ def on_inline_query(msg):
 						id=rnint, title=y,
 					input_message_content=InputTextMessageContent(
 					message_text=x),
-					cache_time=None
 				))
 		else:
 			exit()
