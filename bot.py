@@ -19,7 +19,7 @@ def on_chat_command(msg):
 		return
 	command = msg['text'].lower()
 	if (command.split(' ')[0] == '/archive' or command.split(' ')[0] == '/archive@archiveisbot'):
-		print('Valid command from ' + chat_id)
+		print('Valid command from ' + str(chat_id))
 		try:
 			is_reply = msg['reply_to_message']
 		except KeyError:
