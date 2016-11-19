@@ -45,7 +45,7 @@ def on_inline_query(msg):
 					input_message_content=InputTextMessageContent(
 						message_text=archive_uri),
 					)]
-		else:
+		elif '.is' in archive_uri:
 			timegate = 'https://archive.fo/timemap/'
 			mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
 			timemap = mc.get_memento_info(query_string).get('timegate_uri')
@@ -53,19 +53,26 @@ def on_inline_query(msg):
 			r = requests.get(timemap, headers=hdr)
 			archive_map = r.text
 			map_list = re.findall('\<(.*?)\>', archive_map)[2:-1]
+			date_list= re.findall('datetime=\"(.+)\"', archive_map)
+			print(len(map_list))
+			print(len(date_list))
 			archive_json = []
-			if len(map_list)> 50:
+			if len(map_list) > 50:
 				map_list = re.findall('\<(.*?)\>', archive_map)[2:50]
-			for x in map_list:
-				rnint = str(random.randint(1,3000))
-				archive_json.append(InlineQueryResultArticle(
-					id=rnint, title=x,
-				input_message_content=InputTextMessageContent(
-				message_text=x)
-			))
-#				print(archive_json)
+				date_list = re.findall('/datetime=\"(.+)\"/', archive_map)[0:50]
+			for x, y in zip(map_list, date_list):
+#				for y in date_list:
+					rnint = str(random.randint(1,3000))
+					archive_json.append(InlineQueryResultArticle(
+						id=rnint, title=y,
+					input_message_content=InputTextMessageContent(
+					message_text=x),
+					cache_time=None
+				))
+		else:
+			exit()
+		print('Sending query response\n')
 		return archive_json
-	print('Sending query response\n')
 	answerer.answer(msg, compute)
 
 def link_handler(link):
