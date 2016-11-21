@@ -87,7 +87,7 @@ def link_handler(link):
 #			print(uri)
 #			print(archive_uri)
 			print('Archive is ' + archive_uri)
-		except:
+		except AttributeError:
 			url = 'https://archive.fo/submit/'
 			values = { 'url' : uri }
 			headers = { 'User-Agent' : 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg' }
@@ -96,11 +96,23 @@ def link_handler(link):
 #			print(response)
 			archive_uri = response.split('"')[1]
 			print('Archive creation sucessful')
+		except:
+			print('Sum happen')
+			return('Something went wrong, let @rakubun know')
 		else:
-			return archive_uri
+			pass
 	else:
 		return 'No valid URL found'
-	return archive_uri
+	if 'archive.fo' in archive_uri or 'archive.is' in archive_uri:
+#		print(archive_uri)
+		return archive_uri
+	elif 'trans' in archive_uri:
+		archive_uri = mc.get_memento_info(uri).get("timegate_uri")
+		print('Sent weird api deal')
+		return(archive_uri)
+	else:
+		print('^No it wasn\'t')
+		return 'Something went wrong, let @rakubun know'
 
 bot.message_loop({'chat': on_chat_command,
 		'inline_query': on_inline_query,
