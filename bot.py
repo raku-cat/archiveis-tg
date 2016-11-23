@@ -58,21 +58,21 @@ def on_inline_query(msg):
 #			print(len(date_list))
 			archive_json = []
 			if len(map_list) > 50:
-				map_chunk= []
-				date_chunk = []
-				for value in map_list:
-					map_chunk.append([value])
-					if len(map_chunk) > 49:
-						for x, y in zip(map_list, date_list):
-							print(x)
-							rnint = str(random.randint(1,3000))
-							archive_json.append(InlineQueryResultArticle(
-								id=rnint, title=y,
-								input_message_content=InputTextMessageContent(
-								message_text=x),
-							))
-							map_chunk = []
-#				map_list = re.findall('\<(.*?)\>', archive_map)[2:50]
+#				map_chunk= []
+#				date_chunk = []
+#				for value in map_list:
+#					map_chunk.append([value])
+#					if len(map_chunk) > 49:
+#						for x, y in zip(map_list, date_list):
+#							print(x)
+#							rnint = str(random.randint(1,3000))
+#							archive_json.append(InlineQueryResultArticle(
+#								id=rnint, title=y,
+#								input_message_content=InputTextMessageContent(
+#								message_text=x),
+#							))
+#							map_chunk = []
+				map_list = re.findall('\<(.*?)\>', archive_map)[2:50]
 #				print(len(map_list))
 #				print(len(date_list))
 			for x, y in zip(map_list, date_list):
@@ -84,9 +84,17 @@ def on_inline_query(msg):
 				))
 		else:
 			exit()
+		return archive_json
+	def car():
+		archive_json = [InlineQueryResultArticle(
+			id='foofoo', title='foo',
+			input_message_content=InputTextMessageContent(
+			message_text='foobar'))]
 		print('Sending query response\n')
 		return archive_json
 	answerer.answer(msg, compute)
+	time.sleep(5)
+	answerer.answer(msg, car)
 
 def link_handler(link):
 	uri_rec = re.search("(?P<url>https?://[^\s]+)", link)
