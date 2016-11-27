@@ -28,13 +28,18 @@ def on_chat_command(msg):
 			command = is_reply['text']
 	else:
 		return
-	print('Responding to ' + str(chat_id))
-	try:
-		handled_link, keyboard = link_handler(command) or (handled_link, None)
-	except ValueError:
+	handled_link = link_handler(command)
+	result_type = type(handled_link)
+#	print(result_type)
+	if result_type == str:
 		bot.sendMessage(chat_id, handled_link, reply_to_message_id=msg_id)
-	else:
+	elif result_type == tuple:
+		keyboard = handled_link[1]
+		handled_link = handled_link[0]
 		bot.sendMessage(chat_id, handled_link, reply_to_message_id=msg_id, reply_markup=keyboard)
+	else:
+		return
+	print('Responding to ' + str(chat_id))
 
 def on_inline_query(msg):
 	query_id, form_id, query_string = telepot.glance(msg, flavor='inline_query')
@@ -68,25 +73,11 @@ def on_inline_query(msg):
 #			print(len(date_list))
 			archive_json = []
 			if len(map_list) > 50:
-#				map_chunk= []
-#				date_chunk = []
-#				for value in map_list:
-#					map_chunk.append([value])
-#					if len(map_chunk) > 49:
-#						for x, y in zip(map_list, date_list):
-#							print(x)
-#							rnint = str(random.randint(1,3000))
-#							archive_json.append(InlineQueryResultArticle(
-#								id=rnint, title=y,
-#								input_message_content=InputTextMessageContent(
-#								message_text=x),
-#							))
-#							map_chunk = []
 				map_list = re.findall('\<(.*?)\>', archive_map)[2:50]
 #				print(len(map_list))
 #				print(len(date_list))
 			for x, y in zip(map_list, date_list):
-					rnint = str(random.randint(1,3000))
+					rnint = str(random.randint(1,100000))
 					archive_json.append(InlineQueryResultArticle(
 						id=rnint, title=y,
 					input_message_content=InputTextMessageContent(
@@ -99,13 +90,12 @@ def on_inline_query(msg):
 	answerer.answer(msg, compute)
 
 def on_callback_query(msg):
-	query_id, from_id, msg_id = telepot.glance(msg, flavor='callback_query')
-#	print(msg_id)
-#	print(inline_query_id)
-#	print('noot noot' + query_data)
-#	print(archive_create(query_data))
-	bot.answerCallbackQuery(query_id, text='boop')
-	bot.sendMessage(from_id, 'beep')
+	query_id, chat_id, msg_id = telepot.glance(msg, flavor='callback_query')
+	print(msg)
+	print(query_id, chat_id, msg_id)
+	inline_message_id = msg['inline_message_id']
+	bot.answerCallbackQuery(query_id)
+	bot.editMessageText(inline_message_id, 'beep')
 
 def link_handler(link):
 	uri_rec = re.search("(?P<url>https?://[^\s]+)", link)
