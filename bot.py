@@ -29,12 +29,12 @@ def on_chat_command(msg):
 	else:
 		return
 	print('Responding to ' + str(chat_id))
-	handled_link = link_handler(command)[0]
 	try:
-		keyboard = link_handler(command)[1]
-		bot.sendMessage(chat_id, handled_link, reply_to_message_id=msg_id, reply_markup=keyboard)
-	except:
+		handled_link, keyboard = link_handler(command) or (handled_link, None)
+	except ValueError:
 		bot.sendMessage(chat_id, handled_link, reply_to_message_id=msg_id)
+	else:
+		bot.sendMessage(chat_id, handled_link, reply_to_message_id=msg_id, reply_markup=keyboard)
 
 def on_inline_query(msg):
 	query_id, form_id, query_string = telepot.glance(msg, flavor='inline_query')
@@ -99,11 +99,13 @@ def on_inline_query(msg):
 	answerer.answer(msg, compute)
 
 def on_callback_query(msg):
-	query_data, msg_id, chat_id = telepot.glance(msg, flavor='callback_query')
-	print(chat_id)
+	query_id, from_id, msg_id = telepot.glance(msg, flavor='callback_query')
+#	print(msg_id)
+#	print(inline_query_id)
 #	print('noot noot' + query_data)
 #	print(archive_create(query_data))
-	bot.sendMessage(chat_id, 'beep', reply_to_message_id=msg_id)
+	bot.answerCallbackQuery(query_id, text='boop')
+	bot.sendMessage(from_id, 'beep')
 
 def link_handler(link):
 	uri_rec = re.search("(?P<url>https?://[^\s]+)", link)
@@ -144,9 +146,9 @@ def link_handler(link):
 		print('^No it wasn\'t')
 		return 'Something went wrong, let @rakubun know'
 
-def archive_create(uri):
+def archive_create(quri):
 	url = 'https://archive.fo/submit/'
-	values = { 'url' : uri,'anyway' : 1 }
+	values = { 'url' : quri,'anyway' : 1 }
 	headers = { 'User-Agent' : 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg' }
 	r = requests.post(url, data=values, headers=headers)
 	response = r.text
