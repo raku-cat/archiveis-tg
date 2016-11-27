@@ -2,7 +2,7 @@
 import sys
 import time
 import telepot
-from telepot.namedtuple import InlineQueryResultArticle, InputTextMessageContent
+from telepot.namedtuple import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton
 from memento_client import MementoClient
 import re
 import requests
@@ -29,13 +29,23 @@ def on_chat_command(msg):
 	else:
 		return
 	print('Responding to ' + str(chat_id))
-	bot.sendMessage(chat_id, link_handler(command), reply_to_message_id=msg_id)
+	handled_link = link_handler(command)[0]
+	try:
+		keyboard = link_handler(command)[1]
+		bot.sendMessage(chat_id, handled_link, reply_to_message_id=msg_id, reply_markup=keyboard)
+	except:
+		bot.sendMessage(chat_id, handled_link, reply_to_message_id=msg_id)
 
 def on_inline_query(msg):
 	query_id, form_id, query_string = telepot.glance(msg, flavor='inline_query')
 #	print(query_string)
 	print('Query ' + query_id + ' recieved')
-	archive_uri =link_handler(query_string)
+	archive_uri = link_handler(query_string)[0]
+	try:
+		keyboard = link_handler(query_string)[1]
+#		print(keyboard)
+	except:
+		pass
 	if archive_uri == None:
 		return
 	def compute():
@@ -80,21 +90,20 @@ def on_inline_query(msg):
 					archive_json.append(InlineQueryResultArticle(
 						id=rnint, title=y,
 					input_message_content=InputTextMessageContent(
-					message_text=x),
+					message_text=x), reply_markup=keyboard,
 				))
 		else:
 			exit()
-		return archive_json
-	def car():
-		archive_json = [InlineQueryResultArticle(
-			id='foofoo', title='foo',
-			input_message_content=InputTextMessageContent(
-			message_text='foobar'))]
 		print('Sending query response\n')
 		return archive_json
 	answerer.answer(msg, compute)
-	time.sleep(5)
-	answerer.answer(msg, car)
+
+def on_callback_query(msg):
+	query_data, msg_id, chat_id = telepot.glance(msg, flavor='callback_query')
+	print(chat_id)
+#	print('noot noot' + query_data)
+#	print(archive_create(query_data))
+	bot.sendMessage(chat_id, 'beep', reply_to_message_id=msg_id)
 
 def link_handler(link):
 	uri_rec = re.search("(?P<url>https?://[^\s]+)", link)
@@ -110,14 +119,8 @@ def link_handler(link):
 #			print(archive_uri)
 			print('Archive is ' + archive_uri)
 		except AttributeError:
-			url = 'https://archive.fo/submit/'
-			values = { 'url' : uri }
-			headers = { 'User-Agent' : 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg' }
-			r = requests.post(url, data=values, headers=headers)
-			response = r.text
-#			print(response)
-			archive_uri = response.split('"')[1]
-			print('Archive creation sucessful')
+			archive_uri = archive_create(uri)
+			return archive_uri
 		except:
 			print('Sum happen')
 			return('Something went wrong, let @rakubun know')
@@ -125,9 +128,14 @@ def link_handler(link):
 			pass
 	else:
 		return 'No valid URL found'
-	if 'archive.fo' in archive_uri or 'archive.is' in archive_uri:
+	if 'archive.fo' in archive_uri:
 #		print(archive_uri)
 		return archive_uri
+	elif 'archive.is' in archive_uri:
+		keyboard = InlineKeyboardMarkup(inline_keyboard=[
+			[InlineKeyboardButton(text='Force save page', callback_data=str(random.randint(1,100000)))],
+			])
+		return archive_uri, keyboard
 	elif 'trans' in archive_uri:
 		archive_uri = mc.get_memento_info(uri).get("timegate_uri")
 		print('Sent weird api deal')
@@ -136,8 +144,20 @@ def link_handler(link):
 		print('^No it wasn\'t')
 		return 'Something went wrong, let @rakubun know'
 
+def archive_create(uri):
+	url = 'https://archive.fo/submit/'
+	values = { 'url' : uri,'anyway' : 1 }
+	headers = { 'User-Agent' : 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg' }
+	r = requests.post(url, data=values, headers=headers)
+	response = r.text
+#	print(response)
+	archive_uri = response.split('"')[1]
+	print('Archive creation sucessful')
+	return archive_uri
+
 bot.message_loop({'chat': on_chat_command,
 		'inline_query': on_inline_query,
 		'edited_chat': on_chat_command,
+		'callback_query': on_callback_query,
 		},
 		run_forever='Started...')
