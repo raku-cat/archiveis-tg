@@ -42,18 +42,24 @@ def on_chat_command(msg):
 	print('Responding to ' + str(chat_id))
 
 def on_inline_query(msg):
-	query_id, form_id, query_string = telepot.glance(msg, flavor='inline_query')
-#	print(query_string)
+	query_id, form_id, query_string, offset = telepot.glance(msg, flavor='inline_query', long=True)
+#	print(msg)
+#	print(type(offset))
 	print('Query ' + query_id + ' recieved')
-	archive_uri = link_handler(query_string)[0]
-	try:
-		keyboard = link_handler(query_string)[1]
-#		print(keyboard)
-	except:
-		pass
+	handled_link = link_handler(query_string)
+	result_type = type(handled_link)
+	if result_type == str:
+		archive_uri = handled_link[0]
+	elif result_type == tuple:
+		archive_uri = handled_link[0]
+		keyboard = handled_link[1]
+	else:
+		return
 	if archive_uri == None:
 		return
+	next_offset = int(offset) if offset != '' else 0
 	def compute():
+		offset = next_offset
 		if '.fo' in archive_uri:
 			archive_json = [InlineQueryResultArticle(
 					id='url', title=archive_uri,
@@ -68,14 +74,22 @@ def on_inline_query(msg):
 			r = requests.get(timemap, headers=hdr)
 			archive_map = r.text
 			map_list = re.findall('\<(.*?)\>', archive_map)[2:-1]
-			date_list= re.findall('datetime=\"(.+)\"', archive_map)
+			date_list = re.findall('datetime=\"(.+)\"', archive_map)
 #			print(len(map_list))
 #			print(len(date_list))
 			archive_json = []
+#			offset=''
 			if len(map_list) > 50:
-				map_list = re.findall('\<(.*?)\>', archive_map)[2:50]
+				if offset:
+					if len(map_list[offset:]) > 50:
+						map_list = re.findall('\<(.*?)\>', archive_map)[2 + offset:offset + 50]
+						date_list = re.findall('datetime=\"(.+)\"', archive_map)[offset:]
+				else:
+					map_list = re.findall('\<(.*?)\>', archive_map)[2:50]
+#						print('jdjdhf')
 #				print(len(map_list))
 #				print(len(date_list))
+				offset = str(int(offset) + 51)
 			rnint = random.sample(range(5000), 50)
 			for x, y, z in zip(map_list, date_list, rnint):
 					archive_json.append(InlineQueryResultArticle(
@@ -86,26 +100,27 @@ def on_inline_query(msg):
 		else:
 			exit()
 		print('Sending query response\n')
-		return archive_json
+		return {'results': archive_json, 'next_offset': offset}
 	answerer.answer(msg, compute)
 
-def on_callback_query(msg):
-	query_id, chat_id, query_data = telepot.glance(msg, flavor='callback_query')
+#def on_callback_query(msg):
+#	query_id, chat_id, query_data = telepot.glance(msg, flavor='callback_query')
 #	print(msg)
-	print('Recieved query ' + query_id)
-	try:
-		kitten = msg['message']['reply_to_message']['text'].split(' ')[1]
-	except:
-		return
+#	print(query_data)
+#	print('Recieved query ' + query_id)
+#	try:
+#		kitten = msg['message']['reply_to_message']['text'].split(' ')[1]
+#	except:
+#		return
 #	print(kitten)
-	try:
-		msg_idf = telepot.message_identifier(msg['message'])
-	except KeyError:
-		msg_idf = msg['inline_message_id']
-	bot.editMessageText(msg_idf, archive_create(kitten))
-	bot.answerCallbackQuery(query_id)
-	print('Responding to callback ' + query_id)
-
+#	try:
+#		msg_idf = telepot.message_identifier(msg['message'])
+#	except KeyError:
+#		msg_idf = msg['inline_message_id']
+#	bot.editMessageText(msg_idf, archive_create(kitten))
+#	bot.answerCallbackQuery(query_id)
+#	print('Responding to callback ' + query_id)
+#
 def link_handler(link):
 	uri_rec = re.search("(?P<url>https?://[^\s]+)", link)
 	if uri_rec:
@@ -134,7 +149,7 @@ def link_handler(link):
 		return archive_uri
 	elif 'archive.is' in archive_uri:
 		keyboard = InlineKeyboardMarkup(inline_keyboard=[
-			[InlineKeyboardButton(text='Force save page', callback_data=str(random.randint(1,100000)))],
+			[InlineKeyboardButton(text='Force save page', callback_data=str(archive_uri))],
 			])
 		return archive_uri, keyboard
 	elif 'trans' in archive_uri:
@@ -164,6 +179,6 @@ def archive_create(uri):
 bot.message_loop({'chat': on_chat_command,
 		'inline_query': on_inline_query,
 		'edited_chat': on_chat_command,
-		'callback_query': on_callback_query,
+#		'callback_query': on_callback_query,
 		},
 		run_forever='Started...')
