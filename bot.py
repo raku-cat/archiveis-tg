@@ -103,24 +103,24 @@ def on_inline_query(msg):
 		return {'results': archive_json, 'next_offset': offset}
 	answerer.answer(msg, compute)
 
-#def on_callback_query(msg):
-#	query_id, chat_id, query_data = telepot.glance(msg, flavor='callback_query')
+def on_callback_query(msg):
+	query_id, chat_id, query_data = telepot.glance(msg, flavor='callback_query')
 #	print(msg)
 #	print(query_data)
-#	print('Recieved query ' + query_id)
-#	try:
-#		kitten = msg['message']['reply_to_message']['text'].split(' ')[1]
-#	except:
-#		return
+	print('Recieved query ' + query_id)
+	try:
+		kitten = msg['message']['reply_to_message']['text'].split(' ')[1]
+	except:
+		return
 #	print(kitten)
-#	try:
-#		msg_idf = telepot.message_identifier(msg['message'])
-#	except KeyError:
-#		msg_idf = msg['inline_message_id']
-#	bot.editMessageText(msg_idf, archive_create(kitten))
-#	bot.answerCallbackQuery(query_id)
-#	print('Responding to callback ' + query_id)
-#
+	try:
+		msg_idf = telepot.message_identifier(msg['message'])
+	except KeyError:
+		msg_idf = msg['inline_message_id']
+	bot.editMessageText(msg_idf, archive_create(kitten))
+	bot.answerCallbackQuery(query_id)
+	print('Responding to callback ' + query_id)
+
 def link_handler(link):
 	uri_rec = re.search("(?P<url>https?://[^\s]+)", link)
 	if uri_rec:
@@ -149,7 +149,7 @@ def link_handler(link):
 		return archive_uri
 	elif 'archive.is' in archive_uri:
 		keyboard = InlineKeyboardMarkup(inline_keyboard=[
-			[InlineKeyboardButton(text='Force save page', callback_data=str(archive_uri))],
+			[InlineKeyboardButton(text='Force save page', callback_data=str(random.randint(1,100000)))],
 			])
 		return archive_uri, keyboard
 	elif 'trans' in archive_uri:
@@ -162,10 +162,9 @@ def link_handler(link):
 
 def archive_create(uri):
 	url = 'https://archive.fo/submit/'
-	values = { 'anyway' : '1', 'url' : uri }
+	values = { 'url': uri + '&anyway=1' }
 	headers = { 'User-Agent' : 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg' }
 	r = requests.post(url, data=values, headers=headers)
-#	print(r)
 	response = r.text
 #	print(response)
 	archive_uri = response.split('"')[1]
@@ -179,6 +178,6 @@ def archive_create(uri):
 bot.message_loop({'chat': on_chat_command,
 		'inline_query': on_inline_query,
 		'edited_chat': on_chat_command,
-#		'callback_query': on_callback_query,
+		'callback_query': on_callback_query,
 		},
 		run_forever='Started...')
