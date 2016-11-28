@@ -76,10 +76,10 @@ def on_inline_query(msg):
 				map_list = re.findall('\<(.*?)\>', archive_map)[2:50]
 #				print(len(map_list))
 #				print(len(date_list))
-			for x, y in zip(map_list, date_list):
-					rnint = str(random.randint(1,100000))
+			rnint = random.sample(range(5000), 50)
+			for x, y, z in zip(map_list, date_list, rnint):
 					archive_json.append(InlineQueryResultArticle(
-						id=rnint, title=y,
+						id=str(z), title=y,
 					input_message_content=InputTextMessageContent(
 					message_text=x), reply_markup=keyboard,
 				))
@@ -90,12 +90,21 @@ def on_inline_query(msg):
 	answerer.answer(msg, compute)
 
 def on_callback_query(msg):
-	query_id, chat_id, msg_id = telepot.glance(msg, flavor='callback_query')
+	query_id, chat_id, query_data = telepot.glance(msg, flavor='callback_query')
 	print(msg)
-	print(query_id, chat_id, msg_id)
-	inline_message_id = msg['inline_message_id']
+	print('Recieved query ' + query_id)
+	try:
+		kitten = msg['message']['reply_to_message']['text'].split(' ')[1]
+	except:
+		return
+#	print(kitten)
+	try:
+		msg_idf = telepot.message_identifier(msg['message'])
+	except KeyError:
+		msg_idf = msg['inline_message_id']
+	bot.editMessageText(msg_idf, archive_create(kitten))
 	bot.answerCallbackQuery(query_id)
-	bot.editMessageText(inline_message_id, 'beep')
+	print('Responding to callback ' + query_id)
 
 def link_handler(link):
 	uri_rec = re.search("(?P<url>https?://[^\s]+)", link)
@@ -110,10 +119,10 @@ def link_handler(link):
 #			print(uri)
 #			print(archive_uri)
 			print('Archive is ' + archive_uri)
-		except AttributeError:
-			archive_uri = archive_create(uri)
-			return archive_uri
-		except:
+#		except AttributeError:
+#			archive_uri = archive_create(uri)
+#			return archive_uri
+		except NameError:
 			print('Sum happen')
 			return('Something went wrong, let @rakubun know')
 		else:
@@ -136,14 +145,17 @@ def link_handler(link):
 		print('^No it wasn\'t')
 		return 'Something went wrong, let @rakubun know'
 
-def archive_create(quri):
+def archive_create(uri):
 	url = 'https://archive.fo/submit/'
-	values = { 'url' : quri,'anyway' : 1 }
+	values = { 'anyway' : '1', 'url' : uri }
 	headers = { 'User-Agent' : 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg' }
 	r = requests.post(url, data=values, headers=headers)
+#	print(r)
 	response = r.text
 #	print(response)
 	archive_uri = response.split('"')[1]
+#	if 'archive.fo' not in archive_uri:
+#		archive_uri = re.findall(r'"(http.*?)"',response)[1]
 	print('Archive creation sucessful')
 	return archive_uri
 
