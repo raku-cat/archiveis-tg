@@ -91,7 +91,7 @@ def on_inline_query(msg):
 
 def on_callback_query(msg):
 	query_id, chat_id, query_data = telepot.glance(msg, flavor='callback_query')
-	print(msg)
+#	print(msg)
 	print('Recieved query ' + query_id)
 	try:
 		kitten = msg['message']['reply_to_message']['text'].split(' ')[1]
@@ -119,9 +119,9 @@ def link_handler(link):
 #			print(uri)
 #			print(archive_uri)
 			print('Archive is ' + archive_uri)
-#		except AttributeError:
-#			archive_uri = archive_create(uri)
-#			return archive_uri
+		except AttributeError:
+			archive_uri = archive_create(uri)
+			return archive_uri
 		except NameError:
 			print('Sum happen')
 			return('Something went wrong, let @rakubun know')
@@ -143,7 +143,7 @@ def link_handler(link):
 		return(archive_uri)
 	else:
 		print('^No it wasn\'t')
-		return 'Something went wrong, let @rakubun know'
+		return 'Something went wrong, let @blood_skull_boi84 know'
 
 def archive_create(uri):
 	url = 'https://archive.fo/submit/'
@@ -154,10 +154,12 @@ def archive_create(uri):
 	response = r.text
 #	print(response)
 	archive_uri = response.split('"')[1]
-#	if 'archive.fo' not in archive_uri:
+	if 'archive.fo' not in archive_uri:
 #		archive_uri = re.findall(r'"(http.*?)"',response)[1]
-	print('Archive creation sucessful')
-	return archive_uri
+		return('Something went wrong, let @blood_skull_boi84 know')
+	else:
+		print('Archive creation sucessful')
+		return archive_uri
 
 bot.message_loop({'chat': on_chat_command,
 		'inline_query': on_inline_query,
