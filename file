@@ -1,0 +1,26 @@
+Started...
+Recieved query 452268407666811039
+{'submitid': 'nmFpf6eSZj+r7xRt0/Gov6GmPE1+EqxdNRAU0z0Gm1srGJzt77/yS8bM1HZgW9aM', 'url': 'https://www.reddit.com/r/KotakuInAction/comments/5exghu/journalist_sharyl_attkisson_calls_out_facebook/', 'anyway': '1'}
+<pre>$_GET = array(0) {
+}
+$_POST = array(3) {
+  ["submitid"]=>
+  string(64) "nmFpf6eSZj+r7xRt0/Gov6GmPE1+EqxdNRAU0z0Gm1srGJzt77/yS8bM1HZgW9aM"
+  ["url"]=>
+  string(103) "https://www.reddit.com/r/KotakuInAction/comments/5exghu/journalist_sharyl_attkisson_calls_out_facebook/"
+  ["anyway"]=>
+  string(1) "1"
+}
+$_SERVER["HTTP_USER_AGENT"] = string(64) "Telegram archive bot - https://github.com/raku-cat/archiveis-tg/"
+$_SERVER["GATEWAY_INTERFACE"] = string(7) "CGI/1.1"
+$_SERVER["SERVER_PROTOCOL"] = string(8) "HTTP/1.1"
+$_SERVER["REQUEST_METHOD"] = string(4) "POST"
+$_SERVER["QUERY_STRING"] = string(0) ""
+</pre>
+Responding to callback 452268407666811039
+Traceback (most recent call last):
+  File "./bot.py", line 207, in <module>
+    run_forever='Started...')
+  File "/usr/local/lib/python3.4/dist-packages/telepot/__init__.py", line 935, in message_loop
+    time.sleep(10)
+KeyboardInterrupt

@@ -104,16 +104,19 @@ def on_callback_query(msg):
     msg_idf = telepot.message_identifier(msg['message'])
     callback_text = ''
     if query_data == 'save':
-        url = msg['message']['reply_to_message']['text'].split(' ')[1]
-        msg_idf = telepot.message_identifier(msg['message'])
         r = requests.get('https://archive.fo/')
         html = r.text
         soup = BeautifulSoup(html, 'lxml')
         submitid = soup.find('input').get('value')
-        headers = { 'User-agent': 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg/' }
-        values = { 'submitid': submitid, 'url': url, 'anyway': 1 }
-        r = requests.post('https://archive.fo/submit/', values, headers)
-        print(r.text)
+        headers = { 'User-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36' }
+        values = { 'submitid': submitid, 'url': url, 'anyway': '1' }
+        r = requests.post('https://archive.fo/submit/', data=values, headers=headers)
+        uri = r.text
+        archive_uri = uri.split('"')[1]
+        if 'archive.fo' in archive_uri:
+            pass
+        else:
+            callback_text = 'Something went wrong, let @blood_skull_boi84 know'
     else:
         uri = msg['message']['text']
         foo, keyboard = link_handler(url)
