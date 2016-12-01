@@ -69,9 +69,13 @@ def on_inline_query(msg):
             timegate = 'https://archive.fo/timemap/'
             mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
             timemap = mc.get_memento_info(query_string).get('timegate_uri')
-            headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',}
+            print(timemap)
+            print( repr(timemap))
+            headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 7.0; Nexus 6P Build/NBD91P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2919.3 Mobile Safari/537.36'}
             r = requests.get(timemap, headers)
+            print(r)
             archive_map = r.text
+            print(archive_map)
             map_list = re.findall('\<(.*?)\>', archive_map)[2:-1]
             date_list = re.findall('datetime=\"(.+)\"', archive_map)
 #            print(len(map_list))
@@ -98,6 +102,7 @@ def on_inline_query(msg):
             exit()
         print('Sending query response\n')
         return {'results': archive_json, 'next_offset': offset}
+    return
     answerer.answer(msg, compute)
 
 def on_callback_query(msg):
@@ -109,37 +114,30 @@ def on_callback_query(msg):
     msg_idf = telepot.message_identifier(msg['message'])
     callback_text = ''
     if query_data == 'save':
-#        url = msg['message']['reply_to_message']['text'].split(' ')[1]
-#        msg_idf = telepot.message_identifier(msg['message'])
+        url = msg['message']['reply_to_message']['text'].split(' ')[1]
+        msg_idf = telepot.message_identifier(msg['message'])
         archive_uri_ = archive_create(url)
         if 'archive.fo' not in archive_uri_:
             callback_text = archive_uri_
         else:
             archive_uri = archive_uri_
-    elif query_data == 'back':
-        url = msg['message']['text']
-        uri, keyboard = link_handler(url)
-        dt = url.split('/')[3]
-        dt = datetime.datetime.strptime(dt, '%Y%m%d%H%M%S')
-        timegate = 'https://archive.fo/timegate/'
-        mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
-        try:
-            archive_uri = mc.get_memento_info(uri, dt).get('mementos').get('prev').get('uri')[0]
-        except AttributeError:
-            callback_text = 'No older archives or something went wrong.'
-    elif query_data == 'next':
-        url = msg['message']['text']
-        uri, keyboard = link_handler(url)
-        dt = url.split('/')[3]
-        dt = datetime.datetime.strptime(dt, '%Y%m%d%H%M%S')
-        timegate = 'https://archive.fo/timegate/'
-        mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
-        try:
-           archive_uri = mc.get_memento_info(uri, dt).get('mementos').get('next').get('uri')[0]
-        except AttributeError:
-           callback_text = 'No newer archives or something went wrong.'
     else:
-        pass
+        uri = msg['message']['text']
+        foo, keyboard = link_handler(url)
+        dt = uri.split('/')[3]
+        dt = datetime.datetime.strptime(dt, '%Y%m%d%H%M%S')
+        timegate = 'https://archive.fo/timegate/'
+        mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
+        if query_data == 'back':
+            try:
+                archive_uri = mc.get_memento_info(url, dt).get('mementos').get('prev').get('uri')[0]
+            except AttributeError:
+                callback_text = 'No older archives or something went wrong.'
+        elif query_data == 'next':
+            try:
+               archive_uri = mc.get_memento_info(uri, dt).get('mementos').get('next').get('uri')[0]
+            except AttributeError:
+               callback_text = 'No newer archives or something went wrong.'
     try:
         bot.editMessageText(msg_idf, archive_uri)
     except:
@@ -161,7 +159,7 @@ def link_handler(link):
         mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
         try:
             archive_uri = mc.get_memento_info(uri).get("mementos").get("last").get("uri")[0]
-#           print(uri)
+#            print(uri)
 #           print(archive_uri)
             print('Archive is ' + archive_uri)
         except AttributeError:
@@ -179,7 +177,7 @@ def link_handler(link):
         return archive_uri
     elif 'archive.is' in archive_uri:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text='Force save page', callback_data='save')],
+#                    [InlineKeyboardButton(text='Force save page', callback_data='save')],
                     [InlineKeyboardButton(text='← Prior', callback_data='back'), InlineKeyboardButton(text='Next →', callback_data='next')],
                     [InlineKeyboardButton(text='History', switch_inline_query_current_chat=uri)],
                 ])
