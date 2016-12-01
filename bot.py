@@ -7,6 +7,7 @@ from memento_client import MementoClient
 import re
 import requests
 import random
+import datetime
 
 with open('token.txt', 'r') as f:
     token = f.read().strip('\n')
@@ -43,19 +44,17 @@ def on_chat_command(msg):
 
 def on_inline_query(msg):
     query_id, form_id, query_string, offset = telepot.glance(msg, flavor='inline_query', long=True)
-#   print(msg)
-#   print(type(offset))
+#    print(msg)
+#    print(type(offset))
     print('Query ' + query_id + ' recieved')
-    handled_link = link_handler(query_string)
-    result_type = type(handled_link)
-    if result_type == str:
-        archive_uri = handled_link[0]
-    elif result_type == tuple:
-        archive_uri = handled_link[0]
-        keyboard = handled_link[1]
-    else:
-        return
-    if archive_uri == None:
+    try:
+        archive_uri, keyboard = link_handler(query_string)
+    except:
+        pass
+    try:
+        if archive_uri == '':
+            return
+    except:
         return
     next_offset = int(offset) if offset != '' else 0
     def compute():
@@ -75,10 +74,9 @@ def on_inline_query(msg):
             archive_map = r.text
             map_list = re.findall('\<(.*?)\>', archive_map)[2:-1]
             date_list = re.findall('datetime=\"(.+)\"', archive_map)
-#           print(len(map_list))
-#           print(len(date_list))
+#            print(len(map_list))
+#            print(len(date_list))
             archive_json = []
-#           offset=''
             if len(map_list) > 50:
                 if offset:
                     if len(map_list[offset:]) > 50:
@@ -86,7 +84,6 @@ def on_inline_query(msg):
                         date_list = re.findall('datetime=\"(.+)\"', archive_map)[offset:]
                 else:
                     map_list = re.findall('\<(.*?)\>', archive_map)[2:50]
-#                       print('jdjdhf')
 #               print(len(map_list))
 #               print(len(date_list))
                 offset = str(int(offset) + 51)
@@ -105,23 +102,53 @@ def on_inline_query(msg):
 
 def on_callback_query(msg):
     query_id, chat_id, query_data = telepot.glance(msg, flavor='callback_query')
-#   print(msg)
-#   print(query_data)
+#    print(msg)
+#    print(query_data)
     print('Recieved query ' + query_id)
-    try:
-        url = msg['message']['reply_to_message']['text'].split(' ')[1]
-    except:
-        return
-    try:
-        msg_idf = telepot.message_identifier(msg['message'])
-    except KeyError:
-        msg_idf = msg['inline_message_id']
-    archive_uri = archive_create(url)
-    if 'archive' not in archive_uri:
-            bot.answerCallbackQuery(query_id, text=archive_uri)
+    url = msg['message']['reply_to_message']['text'].split(' ')[1]
+    msg_idf = telepot.message_identifier(msg['message'])
+    callback_text = ''
+    if query_data == 'save':
+#        url = msg['message']['reply_to_message']['text'].split(' ')[1]
+#        msg_idf = telepot.message_identifier(msg['message'])
+        archive_uri_ = archive_create(url)
+        if 'archive.fo' not in archive_uri_:
+            callback_text = archive_uri_
+        else:
+            archive_uri = archive_uri_
+    elif query_data == 'back':
+        url = msg['message']['text']
+        uri, keyboard = link_handler(url)
+        dt = url.split('/')[3]
+        dt = datetime.datetime.strptime(dt, '%Y%m%d%H%M%S')
+        timegate = 'https://archive.fo/timegate/'
+        mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
+        try:
+            archive_uri = mc.get_memento_info(uri, dt).get('mementos').get('prev').get('uri')[0]
+        except AttributeError:
+            callback_text = 'No older archives or something went wrong.'
+    elif query_data == 'next':
+        url = msg['message']['text']
+        uri, keyboard = link_handler(url)
+        dt = url.split('/')[3]
+        dt = datetime.datetime.strptime(dt, '%Y%m%d%H%M%S')
+        timegate = 'https://archive.fo/timegate/'
+        mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
+        try:
+           archive_uri = mc.get_memento_info(uri, dt).get('mementos').get('next').get('uri')[0]
+        except AttributeError:
+           callback_text = 'No newer archives or something went wrong.'
     else:
+        pass
+    try:
         bot.editMessageText(msg_idf, archive_uri)
-        bot.answerCallbackQuery(query_id)
+    except:
+        pass
+    try:
+        bot.editMessageText(msg_idf, archive_uri, reply_markup=keyboard)
+    except:
+        pass
+    bot.answerCallbackQuery(query_id, text=callback_text)
     print('Responding to callback ' + query_id)
 
 def link_handler(link):
@@ -142,7 +169,7 @@ def link_handler(link):
             return archive_uri
         except NameError:
             print('Sum happen')
-            return('Something went wrong, let @rakubun know')
+            return('Something went wrong, let @blood_skull_boi84 know')
         else:
             pass
     else:
@@ -152,11 +179,10 @@ def link_handler(link):
         return archive_uri
     elif 'archive.is' in archive_uri:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text='Force save page', callback_data=str(random.randint(1,100000)))],
-#                [dict([ text='←prior', callback_data='back' ], [ text='test', callback_data='front' ])],
-            ])
-        print(keyboard)
-
+                    [InlineKeyboardButton(text='Force save page', callback_data='save')],
+                    [InlineKeyboardButton(text='← Prior', callback_data='back'), InlineKeyboardButton(text='Next →', callback_data='next')],
+                    [InlineKeyboardButton(text='History', switch_inline_query_current_chat=uri)],
+                ])
         return archive_uri, keyboard
     elif 'trans' in archive_uri:
         archive_uri = mc.get_memento_info(uri).get("timegate_uri")
@@ -168,14 +194,14 @@ def link_handler(link):
 
 def archive_create(uri):
     url = 'https://archive.fo/submit/'
-    values = { 'url': uri + '&anyway=1' }
+    values = { 'url': uri, 'anyway': 1, 'submitid': 'Q0LhFSPD/nfL9rXQ8zNiQREHCs80rH2uT9OsQDA+DR4rGJzt77/yS8bM1HZgW9aM' }
     headers = { 'User-Agent' : 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg' }
-    r = requests.post(url, data=values, headers=headers)
+    r = requests.post(url, values, headers)
     response = r.text
-#   print(response)
+#    print(response)
     archive_uri = response.split('"')[1]
     if 'archive.fo' not in archive_uri:
-#       archive_uri = re.findall(r'"(http.*?)"',response)[1]
+        print('Archive creation failed')
         return('Something went wrong, let @blood_skull_boi84 know')
     else:
         print('Archive creation sucessful')
@@ -183,7 +209,7 @@ def archive_create(uri):
 
 bot.message_loop({'chat': on_chat_command,
         'inline_query': on_inline_query,
-#       'edited_chat': return \,
+        'edited_chat': on_chat_command,
         'callback_query': on_callback_query,
         },
         run_forever='Started...')
