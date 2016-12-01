@@ -8,6 +8,7 @@ import re
 import requests
 import random
 import datetime
+from bs4 import BeautifulSoup
 
 with open('token.txt', 'r') as f:
     token = f.read().strip('\n')
@@ -51,11 +52,7 @@ def on_inline_query(msg):
         archive_uri, keyboard = link_handler(query_string)
     except:
         pass
-    try:
-        if archive_uri == '':
-            return
-    except:
-        return
+    uri = query_string
     next_offset = int(offset) if offset != '' else 0
     def compute():
         offset = next_offset
@@ -66,16 +63,9 @@ def on_inline_query(msg):
                         message_text=archive_uri),
                     )]
         elif '.is' in archive_uri:
-            timegate = 'https://archive.fo/timemap/'
-            mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
-            timemap = mc.get_memento_info(query_string).get('timegate_uri')
-            print(timemap)
-            print( repr(timemap))
-            headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 7.0; Nexus 6P Build/NBD91P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2919.3 Mobile Safari/537.36'}
-            r = requests.get(timemap, headers)
-            print(r)
+            timemap = 'https://archive.fo/timemap/' + query_string
+            r = requests.get(timemap)
             archive_map = r.text
-            print(archive_map)
             map_list = re.findall('\<(.*?)\>', archive_map)[2:-1]
             date_list = re.findall('datetime=\"(.+)\"', archive_map)
 #            print(len(map_list))
@@ -102,7 +92,7 @@ def on_inline_query(msg):
             exit()
         print('Sending query response\n')
         return {'results': archive_json, 'next_offset': offset}
-    return
+#    return
     answerer.answer(msg, compute)
 
 def on_callback_query(msg):
@@ -116,11 +106,14 @@ def on_callback_query(msg):
     if query_data == 'save':
         url = msg['message']['reply_to_message']['text'].split(' ')[1]
         msg_idf = telepot.message_identifier(msg['message'])
-        archive_uri_ = archive_create(url)
-        if 'archive.fo' not in archive_uri_:
-            callback_text = archive_uri_
-        else:
-            archive_uri = archive_uri_
+        r = requests.get('https://archive.fo/')
+        html = r.text
+        soup = BeautifulSoup(html, 'lxml')
+        submitid = soup.find('input').get('value')
+        headers = { 'User-agent': 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg/' }
+        values = { 'submitid': submitid, 'url': url, 'anyway': 1 }
+        r = requests.post('https://archive.fo/submit/', values, headers)
+        print(r.text)
     else:
         uri = msg['message']['text']
         foo, keyboard = link_handler(url)
@@ -177,7 +170,7 @@ def link_handler(link):
         return archive_uri
     elif 'archive.is' in archive_uri:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-#                    [InlineKeyboardButton(text='Force save page', callback_data='save')],
+                    [InlineKeyboardButton(text='Force save page', callback_data='save')],
                     [InlineKeyboardButton(text='← Prior', callback_data='back'), InlineKeyboardButton(text='Next →', callback_data='next')],
                     [InlineKeyboardButton(text='History', switch_inline_query_current_chat=uri)],
                 ])
@@ -192,8 +185,8 @@ def link_handler(link):
 
 def archive_create(uri):
     url = 'https://archive.fo/submit/'
-    values = { 'url': uri, 'anyway': 1, 'submitid': 'Q0LhFSPD/nfL9rXQ8zNiQREHCs80rH2uT9OsQDA+DR4rGJzt77/yS8bM1HZgW9aM' }
-    headers = { 'User-Agent' : 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg' }
+    values = { 'url': uri }
+    headers = { 'User-Agent' : 'Telegram archive bot - https://github.com/raku-cat/archiveis-tg/' }
     r = requests.post(url, values, headers)
     response = r.text
 #    print(response)
