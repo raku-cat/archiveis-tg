@@ -10,6 +10,7 @@ import random
 import datetime
 from bs4 import BeautifulSoup
 
+delay = datetime.datetime.now()
 with open('token.txt', 'r') as f:
     token = f.read().strip('\n')
 bot = telepot.Bot(token)
@@ -51,7 +52,7 @@ def on_inline_query(msg):
     try:
         archive_uri, keyboard = link_handler(query_string)
     except:
-        pass
+        archive_uri = ''
     uri = query_string
     next_offset = int(offset) if offset != '' else 0
     def compute():
@@ -100,26 +101,32 @@ def on_callback_query(msg):
 #    print(msg)
 #    print(query_data)
     print('Recieved query ' + query_id)
+    foo, keyboar = link_handler(url)
     url = msg['message']['reply_to_message']['text'].split(' ')[1]
     msg_idf = telepot.message_identifier(msg['message'])
     callback_text = ''
     if query_data == 'save':
-        r = requests.get('https://archive.fo/')
-        html = r.text
-        soup = BeautifulSoup(html, 'lxml')
-        submitid = soup.find('input').get('value')
-        headers = { 'User-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36' }
-        values = { 'submitid': submitid, 'url': url, 'anyway': '1' }
-        r = requests.post('https://archive.fo/submit/', data=values, headers=headers)
-        uri = r.text
-        archive_uri = uri.split('"')[1]
-        if 'archive.fo' in archive_uri:
-            pass
-        else:
-            callback_text = 'Something went wrong, let @blood_skull_boi84 know'
+        if delay != '':
+            if datetime.datetime.now() > delay:
+                r = requests.get('https://archive.fo/')
+                html = r.text
+                soup = BeautifulSoup(html, 'lxml')
+                submitid = soup.find('input').get('value')
+                headers = { 'User-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36' }
+                values = { 'submitid': submitid, 'url': url, 'anyway': '1' }
+                r = requests.post('https://archive.fo/submit/', data=values, headers=headers)
+                uri = r.text
+                archive_uri = uri.split('"')[1]
+                delay = datetime.datetime.now() + datetime.timedelta(minutes=3)
+                if 'archive.fo' in archive_uri:
+                    pass
+                else:
+                    callback_text = 'Something went wrong, let @blood_skull_boi84 know'
+            else:
+                callback_text = 'Saving on cooldown, please try again in a few miniutes.'
     else:
         uri = msg['message']['text']
-        foo, keyboard = link_handler(url)
+#        foo, keyboard = link_handler(url)
         dt = uri.split('/')[3]
         dt = datetime.datetime.strptime(dt, '%Y%m%d%H%M%S')
         timegate = 'https://archive.fo/timegate/'
