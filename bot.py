@@ -10,6 +10,7 @@ import random
 import datetime
 from bs4 import BeautifulSoup
 
+global delay
 delay = datetime.datetime.now()
 with open('token.txt', 'r') as f:
     token = f.read().strip('\n')
@@ -101,10 +102,11 @@ def on_callback_query(msg):
 #    print(msg)
 #    print(query_data)
     print('Recieved query ' + query_id)
-    foo, keyboar = link_handler(url)
     url = msg['message']['reply_to_message']['text'].split(' ')[1]
+    foo, keyboard = link_handler(url)
     msg_idf = telepot.message_identifier(msg['message'])
     callback_text = ''
+    global delay
     if query_data == 'save':
         if delay != '':
             if datetime.datetime.now() > delay:
