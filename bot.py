@@ -103,7 +103,6 @@ def on_callback_query(msg):
 #    print(query_data)
     print('Recieved query ' + query_id)
     url = msg['message']['reply_to_message']['text'].split(' ')[1]
-    foo, keyboard = link_handler(url)
     msg_idf = telepot.message_identifier(msg['message'])
     callback_text = ''
     global delay
@@ -128,7 +127,7 @@ def on_callback_query(msg):
                 callback_text = 'Saving on cooldown, please try again in a few miniutes.'
     else:
         uri = msg['message']['text']
-#        foo, keyboard = link_handler(url)
+        foo, keyboard = link_handler(url)
         dt = uri.split('/')[3]
         dt = datetime.datetime.strptime(dt, '%Y%m%d%H%M%S')
         timegate = 'https://archive.fo/timegate/'
