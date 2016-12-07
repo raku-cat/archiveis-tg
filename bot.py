@@ -122,7 +122,7 @@ def on_callback_query(msg):
                 if 'archive.fo' in archive_uri:
                     pass
                 else:
-                    callback_text = 'Something went wrong, let @blood_skull_boi84 know'
+                    callback_text = 'Something went wrong, let @raku_cat know'
             else:
                 callback_text = 'Saving on cooldown, please try again in a few miniutes.'
     else:
@@ -171,7 +171,7 @@ def link_handler(link):
             return archive_uri
         except NameError:
             print('Sum happen')
-            return('Something went wrong, let @blood_skull_boi84 know')
+            return('Something went wrong, let @raku_cat know')
         else:
             pass
     else:
@@ -192,7 +192,7 @@ def link_handler(link):
         return(archive_uri)
     else:
         print('^No it wasn\'t')
-        return 'Something went wrong, let @blood_skull_boi84 know'
+        return 'Something went wrong, let @raku_cat know'
 
 def archive_create(uri):
     url = 'https://archive.fo/submit/'
@@ -204,7 +204,7 @@ def archive_create(uri):
     archive_uri = response.split('"')[1]
     if 'archive.fo' not in archive_uri:
         print('Archive creation failed')
-        return('Something went wrong, let @blood_skull_boi84 know')
+        return('Something went wrong, let @raku_cat know')
     else:
         print('Archive creation sucessful')
         return archive_uri
