@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 
 global delay
 delay = datetime.datetime.now()
-with open('token.txt', 'r') as f:
+with open(sys.path[0] + '/token.txt', 'r') as f:
     token = f.read().strip('\n')
 bot = telepot.Bot(token)
 answerer = telepot.helper.Answerer(bot)
