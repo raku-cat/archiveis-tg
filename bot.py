@@ -32,6 +32,7 @@ def on_chat_command(msg):
             command = is_reply['text']
     else:
         return
+    bot.sendChatAction(chat_id, 'typing')
     handled_link = link_handler(command)
     result_type = type(handled_link)
 #   print(result_type)
@@ -154,11 +155,28 @@ def on_callback_query(msg):
     print('Responding to callback ' + query_id)
 
 def link_handler(link):
-    uri_rec = re.search("(?P<url>https?://[^\s]+)", link)
+    try:
+        link = link.split(' ')[1]
+    except IndexError:
+        pass
+    #print(str_link)
+    uri_regex = re.compile(
+        r'^(?:http|ftp)s?://' # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' # domain...
+        r'localhost|' # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|' # ...or ipv4
+        r'\[?[A-F0-9]*:[A-F0-9:]+\]?)' # ...or ipv6
+        r'(?::\d+)?' # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    uri_rec = uri_regex.search(link)
+    #uri_rec = re.search("(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))", link)
+    #print(uri_rec)
+    #print(uri_regex)
+    #print(link)
     if uri_rec:
         print('Url found')
-        uri = uri_rec.group("url")
-#       print(uri)
+        uri = uri_rec.group(0)
+        print(uri)
         timegate = 'https://archive.fo/timegate/'
         mc = MementoClient(timegate_uri=timegate, check_native_timegate=False)
         try:
